@@ -50,13 +50,13 @@ class ModelBuilderController extends Controller
     public function runRegression(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'rows' => ['required', 'array', 'min:10'],
+            'rows' => ['required', 'array', 'min:13'],
             'rows.*' => ['required', 'array'],
         ]);
 
         $rows = $validated['rows'];
 
-        // Count rows with valid target (n). We need n > p = 1 + predictors, so max predictors = n - 2.
+        // Count rows with valid target (n). Need n > p for regression; for all 11 predictors we need n >= 13.
         $n = 0;
         foreach ($rows as $row) {
             $targetVal = $row[self::TARGET_COLUMN] ?? null;
@@ -65,28 +65,14 @@ class ModelBuilderController extends Controller
             }
         }
 
-        $maxPredictors = max(1, $n - 2);
-        $usedFeatures = [];
-
-        foreach (self::FEATURE_COLUMNS as $col) {
-            if ($col === self::TARGET_COLUMN) {
-                continue;
-            }
-            if (count($usedFeatures) >= $maxPredictors) {
-                break;
-            }
-            $hasValues = false;
-            foreach ($rows as $row) {
-                $val = $row[$col] ?? null;
-                if ($val !== '' && $val !== null && is_numeric($val)) {
-                    $hasValues = true;
-                    break;
-                }
-            }
-            if ($hasValues) {
-                $usedFeatures[] = $col;
-            }
+        if ($n < 13) {
+            throw ValidationException::withMessages([
+                'rows' => ['At least 13 rows with valid Soil_loss_sqm are required to fit all 11 predictors.'],
+            ]);
         }
+
+        // Always use all 11 predictors so All Coefficients displays 11 rows with real values (no empty rows).
+        $usedFeatures = self::FEATURE_COLUMNS;
 
         $X = [];
         $y = [];

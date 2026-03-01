@@ -114,6 +114,26 @@ document.addEventListener('DOMContentLoaded', () => {
         'Coastal_Elevation', 'Soil_loss_sqm'
     ];
 
+    /** All predictor columns in display order: same as model creation (Trop_Depressions … Coastal_Elevat). */
+    const ALL_COEFFICIENTS_ORDER = [
+        'Tropical_Depression', 'Tropical_Storms', 'Severe_Tropical_Storms', 'Typhoons', 'Super_Typhoons',
+        'Floods', 'Storm_Surges', 'Precipitation_mm', 'Seawall_m', 'Vegetation_area_sqm', 'Coastal_Elevation'
+    ];
+    /** Display labels for All Coefficients table (short names matching UI headers). */
+    const COEFFICIENT_DISPLAY_NAMES = {
+        Tropical_Depression: 'Trop_Depressions',
+        Tropical_Storms: 'Trop_Storms',
+        Severe_Tropical_Storms: 'Sev_Trop_Storms',
+        Typhoons: 'Typhoons',
+        Super_Typhoons: 'Super_Typhoons',
+        Floods: 'Floods',
+        Storm_Surges: 'Storm_Surges',
+        Precipitation_mm: 'Precipitation_mm',
+        Seawall_m: 'Seawall_m',
+        Vegetation_area_sqm: 'Veg_Area_Sqm',
+        Coastal_Elevation: 'Coastal_Elevat'
+    };
+
     const YEAR_MIN = 1900;
     const YEAR_MAX = 2100;
 
@@ -184,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.forEach((r) => {
             if (r.Soil_loss_sqm && !isNaN(parseFloat(r.Soil_loss_sqm))) rowCount++;
         });
-        if (rowCount < 10) {
-            errors.push('At least 10 rows with valid Soil_loss_sqm are required for regression.');
+        if (rowCount < 13) {
+            errors.push('At least 13 rows with valid Soil_loss_sqm are required to fit all 11 predictors.');
         }
         return errors;
     }
@@ -361,8 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const pValues = reg.p_values || {};
         const stdErrors = reg.standard_errors || {};
         const tStats = reg.t_statistics || {};
-        const coefs = { intercept: reg.intercept, ...reg.coefficients };
-        Object.entries(coefs).forEach(([name, value]) => {
+        const coefs = reg.coefficients || {};
+        // Always show intercept then all 11 predictors (use "—" when not in model)
+        const orderedNames = ['intercept', ...ALL_COEFFICIENTS_ORDER];
+        orderedNames.forEach((name) => {
+            const value = name === 'intercept' ? reg.intercept : coefs[name];
+            const displayName = name === 'intercept' ? 'intercept' : (COEFFICIENT_DISPLAY_NAMES[name] ?? name);
             const tr = document.createElement('tr');
             const se = stdErrors[name];
             const t = tStats[name];
@@ -373,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tCell = typeof t === 'number' ? t.toFixed(4) : '—';
             const pCell = typeof p === 'number' ? p.toFixed(4) : '—';
             const sigCell = name === 'intercept' ? '—' : (isSignificant ? 'Yes' : 'No');
-            tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${coefCell}</td><td>${seCell}</td><td>${tCell}</td><td>${pCell}</td><td>${escapeHtml(sigCell)}</td>`;
+            tr.innerHTML = `<td>${escapeHtml(displayName)}</td><td>${coefCell}</td><td>${seCell}</td><td>${tCell}</td><td>${pCell}</td><td>${escapeHtml(sigCell)}</td>`;
             coefficientsTbody.appendChild(tr);
         });
 
@@ -535,12 +559,19 @@ document.addEventListener('DOMContentLoaded', () => {
             '',
             'All Coefficients (with p-values):',
             '  intercept: ' + lastRegression.intercept,
-            ...Object.entries(lastRegression.coefficients || {}).map(([k, v]) => {
-                const p = lastRegression.p_values?.[k];
-                const se = lastRegression.standard_errors?.[k];
-                const t = lastRegression.t_statistics?.[k];
-                return '  ' + k + ': coef = ' + v + (se != null ? ', SE = ' + se : '') + (t != null ? ', t = ' + t : '') + (p != null ? ', p = ' + p : '');
-            }),
+            ...(function orderedCoefficientLines() {
+                const coefs = lastRegression.coefficients || {};
+                const label = (k) => COEFFICIENT_DISPLAY_NAMES[k] ?? k;
+                const fmt = (k) => {
+                    const v = coefs[k];
+                    const p = lastRegression.p_values?.[k];
+                    const se = lastRegression.standard_errors?.[k];
+                    const t = lastRegression.t_statistics?.[k];
+                    const val = v != null ? v : '—';
+                    return '  ' + label(k) + ': coef = ' + val + (se != null ? ', SE = ' + se : '') + (t != null ? ', t = ' + t : '') + (p != null ? ', p = ' + p : '');
+                };
+                return ALL_COEFFICIENTS_ORDER.map(fmt);
+            })(),
         ];
         const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
         const a = document.createElement('a');

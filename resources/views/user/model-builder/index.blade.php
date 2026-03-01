@@ -68,7 +68,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for ($i = 1; $i <= 10; $i++)
+                        @for ($i = 1; $i <= 13; $i++)
                         <tr data-row="{{ $i }}">
                             <td class="row-num" data-label="">{{ $i }}</td>
                             <td data-label="Year"><input type="number" name="Year" min="1900" max="2100" step="1" placeholder="2024" class="mb-input mb-input-year" data-col="Year" aria-label="Year for row {{ $i }}" title="Year (1900–2100)"></td>
