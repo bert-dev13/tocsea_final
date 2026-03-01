@@ -6,6 +6,83 @@
     background: linear-gradient(135deg, var(--color-ocean-blue), var(--color-deep-blue));
 }
 
+/* --------------------------------------------------------------------------
+   Table layout – prevent Actions column from overlapping (reference: Model Management)
+   -------------------------------------------------------------------------- */
+.admin-calculations-page .admin-users-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-calculations-table {
+    min-width: 960px;
+    table-layout: fixed;
+}
+
+/* Column widths so content fits and Actions column stays visible */
+.admin-calculations-table th:nth-child(1),
+.admin-calculations-table td:nth-child(1) { width: 11%; min-width: 100px; }  /* Date/Time */
+.admin-calculations-table th:nth-child(2),
+.admin-calculations-table td:nth-child(2) { width: 10%; min-width: 90px; }  /* User */
+.admin-calculations-table th:nth-child(3),
+.admin-calculations-table td:nth-child(3) { width: 10%; min-width: 90px; }  /* Location */
+.admin-calculations-table th:nth-child(4),
+.admin-calculations-table td:nth-child(4) { width: 18%; min-width: 120px; } /* Model/Equation */
+.admin-calculations-table th:nth-child(5),
+.admin-calculations-table td:nth-child(5) { width: 12%; min-width: 100px; } /* Predicted Soil Loss */
+.admin-calculations-table th:nth-child(6),
+.admin-calculations-table td:nth-child(6) { width: 8%; min-width: 70px; }  /* Risk Level */
+.admin-calculations-table th:nth-child(7),
+.admin-calculations-table td:nth-child(7) { width: 8%; min-width: 70px; }  /* Status */
+.admin-calculations-table th:nth-child(8),
+.admin-calculations-table td:nth-child(8) { width: 13%; min-width: 90px; }  /* Actions */
+
+/* Keep Actions column visible and non-overlapping (like Model Management .admin-models-col-actions) */
+.admin-calculations-table .admin-users-col-actions {
+    width: 13%;
+    min-width: 90px;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* Sticky Actions column when scrolling horizontally so it stays visible */
+.admin-calculations-table th.admin-users-col-actions,
+.admin-calculations-table td.admin-users-col-actions {
+    position: sticky;
+    right: 0;
+    background: var(--color-white);
+    z-index: 1;
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.admin-calculations-table th.admin-users-col-actions {
+    background: var(--color-gray-100);
+}
+
+.admin-calculations-table tbody tr:hover td.admin-users-col-actions {
+    background: var(--color-off-white);
+}
+
+/* Long text in Location and Model/Equation: ellipsis so table doesn’t blow out */
+.admin-calculations-table td:nth-child(3) .admin-users-cell-address,
+.admin-calculations-table td:nth-child(4) {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-calculations-table td:nth-child(4) {
+    display: table-cell;
+}
+
+.admin-calculations-table td:nth-child(3) .admin-users-cell-address:hover,
+.admin-calculations-table td:nth-child(4):hover {
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+}
+
 /* Risk level badges (consistent with design) */
 .admin-calc-badge-risk {
     display: inline-block;
@@ -212,6 +289,7 @@
     .admin-calculations-table {
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         font-size: 9pt;
         border-collapse: collapse;
     }

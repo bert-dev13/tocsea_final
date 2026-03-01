@@ -61,7 +61,8 @@ class CalculationHistoryController extends Controller
 
         $items = $this->filteredQuery($request)->paginate(self::PER_PAGE)->withQueryString();
 
-        $equationOptions = ['' => 'All equations', '__default__' => 'Default (Buguey)'] + SavedEquation::orderBy('equation_name')
+        $equationOptions = ['' => 'All equations', '__default__' => 'Default (Buguey)'] + SavedEquation::forUser($request->user())
+            ->orderBy('equation_name')
             ->get(['id', 'equation_name'])
             ->mapWithKeys(fn ($eq) => [$eq->id => $eq->equation_name])
             ->all();

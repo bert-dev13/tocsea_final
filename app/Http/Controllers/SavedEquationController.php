@@ -12,11 +12,13 @@ class SavedEquationController extends Controller
 
     /**
      * List saved equations with pagination (for Saved Equations section only).
-     * Does not mix with regression logic.
+     * Only the current user's equations are returned.
      */
     public function index(Request $request): JsonResponse
     {
-        $paginator = SavedEquation::orderBy('updated_at', 'desc')
+        $user = $request->user();
+        $paginator = SavedEquation::forUser($user)
+            ->orderBy('updated_at', 'desc')
             ->paginate(self::PER_PAGE, [
                 'id',
                 'equation_name',
@@ -88,6 +90,8 @@ class SavedEquationController extends Controller
      */
     public function update(Request $request, SavedEquation $saved_equation): JsonResponse
     {
+        $this->authorize('update', $saved_equation);
+
         $validated = $request->validate([
             'equation_name' => ['required', 'string', 'max:255', 'unique:saved_equations,equation_name,' . $saved_equation->id],
             'formula' => ['required', 'string'],
@@ -123,6 +127,8 @@ class SavedEquationController extends Controller
      */
     public function destroy(SavedEquation $saved_equation): JsonResponse
     {
+        $this->authorize('delete', $saved_equation);
+
         $saved_equation->delete();
 
         return response()->json([

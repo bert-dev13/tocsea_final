@@ -18,4 +18,12 @@ class SavedEquation extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Scope to records belonging to the given user.
+     */
+    public function scopeForUser($query, $user): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('user_id', $user->id);
+    }
 }

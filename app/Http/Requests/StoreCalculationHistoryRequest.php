@@ -17,7 +17,11 @@ class StoreCalculationHistoryRequest extends FormRequest
         $soilTypes = ['sandy', 'clay', 'loamy', 'silty', 'peaty', 'chalky'];
 
         $rules = [
-            'saved_equation_id' => ['nullable', 'integer', 'exists:saved_equations,id'],
+            'saved_equation_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('saved_equations', 'id')->where('user_id', $this->user()->id),
+            ],
             'equation_name' => ['required', 'string', 'max:255'],
             'formula_snapshot' => ['required', 'string'],
             'inputs' => ['required', 'array'],
