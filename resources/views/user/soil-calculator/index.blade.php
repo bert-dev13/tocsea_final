@@ -131,10 +131,6 @@
                             <span class="soil-calculator-result-value" id="resultValue">—</span>
                             <span class="soil-calculator-result-unit" id="resultUnit">m²/year</span>
                         </div>
-                        <p class="soil-result-negative-note" id="resultNegativeNote" hidden role="note">
-                            <i data-lucide="info" class="lucide-icon lucide-icon-xs" aria-hidden="true"></i>
-                            Negative value indicates possible soil gain, deposition, or model imbalance. Please review input values.
-                        </p>
                         <span class="soil-calculator-risk-badge" id="resultRiskBadge">—</span>
                     </div>
 

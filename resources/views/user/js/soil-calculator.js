@@ -769,7 +769,9 @@ document.addEventListener('DOMContentLoaded', () => {
             soilLoss = model.formula(seawall, precipitation, tropicalStorm, floods);
         }
         soilLoss = Number.isNaN(soilLoss) ? 0 : soilLoss;
-        const risk = getRiskLevel(soilLoss);
+        // Never display or store negative predicted soil loss; treat as 0 (no net loss)
+        const displaySoilLoss = soilLoss < 0 ? 0 : soilLoss;
+        const risk = getRiskLevel(displaySoilLoss);
         const impactInfo = IMPACT_PRIORITY[risk.level] || IMPACT_PRIORITY.moderate;
         const gaugePos = getGaugePosition(risk.level);
         const typhoonsForFactors = validated.useSaved && validated.values
@@ -784,17 +786,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const factors = getContributingFactors(typhoonsForFactors, floodsForFactors, seawallForFactors, validated.soilType);
 
         const modelName = validated.model?.name || (PREDICTION_MODELS[DEFAULT_MODEL_ID] && !validated.useSaved ? PREDICTION_MODELS[DEFAULT_MODEL_ID].name : 'Model');
-        const isNegative = soilLoss < 0;
         if (resultValue) {
-            resultValue.textContent = Number.isNaN(soilLoss) ? '—' : parseFloat(Number(soilLoss).toFixed(2)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            resultValue.textContent = Number.isNaN(displaySoilLoss) ? '—' : parseFloat(Number(displaySoilLoss).toFixed(2)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         const resultValueBlock = document.querySelector('.soil-result-value-block');
-        const resultNegativeNote = document.getElementById('resultNegativeNote');
-        if (resultValueBlock) resultValueBlock.dataset.negative = isNegative ? 'true' : 'false';
-        if (resultNegativeNote) {
-            if (isNegative) resultNegativeNote.removeAttribute('hidden');
-            else resultNegativeNote.setAttribute('hidden', '');
-        }
+        if (resultValueBlock) resultValueBlock.dataset.negative = 'false';
         if (resultUnit) resultUnit.textContent = 'm²/year';
         if (resultModelBadge) resultModelBadge.textContent = modelName;
         if (resultRiskBadge) {
@@ -843,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateTreeRecommendations({
             soilType: validated.soilType || 'loamy',
             riskLevel: risk.level,
-            soilLoss,
+            soilLoss: displaySoilLoss,
             hazardValues,
             modelName,
         });
@@ -864,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     soil_type: validated.soilType || '',
                 },
             result: {
-                predicted_soil_loss: String(soilLoss),
+                predicted_soil_loss: String(displaySoilLoss),
                 units: 'm²/year',
             },
             risk_level: risk.label,
@@ -876,14 +872,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const storeUrl = getCalculationHistoryStoreUrl();
-        if (storeUrl && !Number.isNaN(soilLoss)) {
+        if (storeUrl && !Number.isNaN(displaySoilLoss)) {
             let payload = {
                 equation_name: modelName,
                 formula_snapshot: validated.useSaved && validated.model?.formula
                     ? validated.model.formula
                     : (PREDICTION_MODELS[DEFAULT_MODEL_ID]?.formulaDisplay || ''),
                 inputs: {},
-                result: soilLoss,
+                result: displaySoilLoss,
                 notes: null,
             };
             if (validated.useSaved && validated.model?.parsed && validated.values) {
